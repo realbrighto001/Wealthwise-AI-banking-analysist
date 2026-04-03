@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — WealthWise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #080810;
+      --gold: #d4a853;
+      --gold-light: #f0c97a;
+      --cream: #faf7f0;
+      --surface: #111118;
+      --surface2: #18181f;
+      --surface3: #1f1f2a;
+      --border: rgba(212,168,83,0.15);
+      --border2: rgba(255,255,255,0.06);
+      --text-muted: #6e6e82;
+      --green: #4caf7d;
+      --red: #e05c5c;
+      --blue: #5c8be0;
+      --purple: #9b59b6;
+    }
+
+    body {
+      background: var(--ink);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 20% 0%, rgba(212,168,83,0.05) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border2);
+      padding: 28px 20px;
+      position: sticky; top: 0; height: 100vh;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .logo span { color: var(--cream); }
+
+    .file-tag {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      word-break: break-all;
+    }
+
+    .nav-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2px;
+      text-decoration: none;
+    }
+
+    .nav-item:hover { background: var(--surface3); color: var(--cream); }
+    .nav-item.active { background: rgba(212,168,83,0.12); color: var(--gold); }
+
+    .new-analysis-btn {
+      display: block;
+      margin-top: 32px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: var(--gold);
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .new-analysis-btn:hover { background: rgba(212,168,83,0.15); }
+
+    /* ── MAIN ────────────────────────────────────── */
+    .main {
+      flex: 1;
+      padding: 32px 28px;
+      overflow-x: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--cream);
+    }
+
+    .page-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── STAT CARDS ──────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover { border-color: var(--border); }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      opacity: 0.4;
+    }
+
+    .stat-label {
+      font-size: 0.73rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── GRID LAYOUT ─────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .grid-3-1 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* ── CARDS ───────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .icon { font-size: 1rem; }
+
+    /* ── CATEGORY LIST ───────────────────────────── */
+    .category-item {
+      margin-bottom: 14px;
+    }
+
+    .cat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .cat-name {
+      font-size: 0.82rem;
+      color: var(--cream);
+      font-weight: 500;
+    }
+
+    .cat-amount {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .cat-bar {
+      height: 5px;
+      background: var(--surface3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .cat-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--gold);
+      transition: width 0.8s ease;
+    }
+
+    /* ── RECIPIENT LIST ──────────────────────────── */
+    .recipient-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .recipient-item:last-child { border-bottom: none; }
+
+    .recipient-rank {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 20px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .recipient-rank.top { color: var(--gold); }
+
+    .recipient-avatar {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--surface3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gold);
+      font-family: 'Syne', sans-serif;
+      flex-shrink: 0;
+    }
+
+    .recipient-info { flex: 1; min-width: 0; }
+
+    .recipient-name {
+      font-size: 0.82rem;
+      color: var(--cream);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recipient-count { font-size: 0.72rem; color: var(--text-muted); }
+
+    .recipient-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cream);
+      flex-shrink: 0;
+    }
+
+    /* ── TRANSACTIONS TABLE ──────────────────────── */
+    .tx-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .tx-table th {
+      text-align: left;
+      padding: 8px 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .tx-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border2);
+      vertical-align: middle;
+    }
+
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .tx-desc {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--cream);
+    }
+
+    .tx-amount { font-weight: 500; color: var(--cream); font-family: 'Syne', sans-serif; }
+    .tx-date { color: var(--text-muted); }
+
+    .cat-badge {
+      background: var(--surface3);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ── AI ADVICE ───────────────────────────────── */
+    .advice-card {
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(212,168,83,0.04) 100%);
+      border: 1px solid rgba(212,168,83,0.25);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .advice-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light), transparent);
+    }
+
+    .advice-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .advice-icon {
+      width: 40px; height: 40px;
+      background: rgba(212,168,83,0.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .advice-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--cream);
+    }
+
+    .advice-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+    .advice-content {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #c8c8d8;
+      white-space: pre-wrap;
+    }
+
+    .advice-content strong { color: var(--cream); }
+
+    /* Canvas charts */
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* Scrollable table */
+    .table-scroll { overflow-x: auto; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .grid-2, .grid-3-1 { grid-template-columns: 1fr; }
+      .main { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Wealth<span>Wise</span></div>
+    <div class="file-tag">📄 {{ filename }}</div>
+
+    <div class="nav-label">Dashboard</div>
+    <a href="#overview" class="nav-item active">📊 Overview</a>
+    <a href="#categories" class="nav-item">🗂️ Categories</a>
+    <a href="#recipients" class="nav-item">👥 Recipients</a>
+    <a href="#trends" class="nav-item">📈 Trends</a>
+    <a href="#transactions" class="nav-item">💳 Transactions</a>
+    <a href="#advice" class="nav-item">🤖 AI Advice</a>
+
+    <a href="{% url 'clear' %}" class="new-analysis-btn">+ New Analysis</a>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="page-header" id="overview">
+      <h1>Financial Dashboard</h1>
+      <p>Analysis of {{ analysis.summary.total_transactions }} transactions from {{ filename }}</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value">₦{{ analysis.summary.total_spent|floatformat:0 }}</div>
+        <div class="stat-sub">Across all transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">{{ analysis.summary.total_transactions }}</div>
+        <div class="stat-sub">Records analyzed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Transaction</div>
+        <div class="stat-value">₦{{ analysis.summary.average_transaction|floatformat:0 }}</div>
+        <div class="stat-sub">Per transaction</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Largest Transfer</div>
+        <div class="stat-value">₦{{ analysis.summary.max_transaction|floatformat:0 }}</div>
+        <div class="stat-sub">Single transaction</div>
+      </div>
+    </div>
+
+    <!-- Categories + Chart -->
+    <div class="grid-2" id="categories">
+      <div class="card">
+        <div class="card-title"><span class="icon">🗂️</span> Spending Categories</div>
+        {% for cat in analysis.categories %}
+        <div class="category-item">
+          <div class="cat-header">
+            <span class="cat-name">{{ cat.category }}</span>
+            <span class="cat-amount">₦{{ cat.total|floatformat:0 }} · {{ cat.percentage }}%</span>
+          </div>
+          <div class="cat-bar">
+            <div class="cat-fill" style="width: {{ cat.percentage }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🥧</span> Category Breakdown</div>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recipients + Monthly -->
+    <div class="grid-2">
+      <div class="card" id="recipients">
+        <div class="card-title"><span class="icon">👥</span> Top Recipients</div>
+        {% for r in analysis.top_recipients %}
+        <div class="recipient-item">
+          <div class="recipient-rank {% if forloop.first %}top{% endif %}">#{{ forloop.counter }}</div>
+          <div class="recipient-avatar">{{ r.recipient|slice:":1"|upper }}</div>
+          <div class="recipient-info">
+            <div class="recipient-name">{{ r.recipient }}</div>
+            <div class="recipient-count">{{ r.count }} transactions · {{ r.percentage }}%</div>
+          </div>
+          <div class="recipient-amount">₦{{ r.total|floatformat:0 }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="card" id="trends">
+        <div class="card-title"><span class="icon">📈</span> Monthly Spending</div>
+        <div class="chart-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Largest transactions -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title"><span class="icon">🔥</span> Largest Transactions</div>
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>
+          </thead>
+          <tbody>
+            {% for tx in analysis.largest_transactions %}
+            <tr>
+              <td class="tx-date">{{ tx.date }}</td>
+              <td><div class="tx-desc">{{ tx.description }}</div></td>
+              <td><span class="cat-badge">{{ tx.category }}</span></td>
+              <td class="tx-amount">₦{{ tx.amount|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="card" style="margin-bottom:20px" id="transactions">
+      <div class="card-title"><span class="icon">💳</span> Recent Transactions</div>
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>
+          </thead>
+          <tbody>
+            {% for tx in analysis.recent_transactions %}
+            <tr>
+              <td class="tx-date">{{ tx.date }}</td>
+              <td><div class="tx-desc">{{ tx.description }}</div></td>
+              <td><span class="cat-badge">{{ tx.category }}</span></td>
+              <td class="tx-amount">₦{{ tx.amount|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI Advice -->
+    <div class="advice-card" id="advice">
+      <div class="advice-header">
+        <div class="advice-icon">🤖</div>
+        <div>
+          <div class="advice-title">AI Wealth Advisor</div>
+          <div class="advice-sub">Personalized insights based on your transaction patterns</div>
+        </div>
+      </div>
+      <div class="advice-content" id="adviceContent">{{ analysis.ai_advice }}</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const data = {{ analysis_json|safe }};
+
+  // ── PIE CHART ────────────────────────────────────
+  const cats = data.categories.slice(0, 7);
+  const colors = ['#d4a853','#5c8be0','#4caf7d','#9b59b6','#e05c5c','#e09c5c','#5ce0c8'];
+
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: cats.map(c => c.category),
+      datasets: [{
+        data: cats.map(c => c.total),
+        backgroundColor: colors,
+        borderColor: '#111118',
+        borderWidth: 3,
+        hoverBorderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#7a7a8c',
+            font: { size: 10, family: 'DM Sans' },
+            boxWidth: 10,
+            padding: 12,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₦${ctx.parsed.toLocaleString()} (${cats[ctx.dataIndex].percentage}%)`
+          }
+        }
+      },
+      cutout: '65%',
+    }
+  });
+
+  // ── BAR CHART ────────────────────────────────────
+  const monthly = data.monthly_trends.slice(-12);
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: monthly.map(m => m.month),
+      datasets: [{
+        label: 'Total Spent',
+        data: monthly.map(m => m.total),
+        backgroundColor: 'rgba(212,168,83,0.7)',
+        borderColor: '#d4a853',
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₦${ctx.parsed.y.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7a7a8c', font: { size: 9 } },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          ticks: {
+            color: '#7a7a8c',
+            font: { size: 9 },
+            callback: v => '₦' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v)
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+
+  // ── Markdown-like bold rendering ─────────────────
+  const adviceEl = document.getElementById('adviceContent');
+  if (adviceEl) {
+    adviceEl.innerHTML = adviceEl.textContent
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^> (.+)/gm, '<blockquote style="border-left:3px solid #d4a853;padding-left:12px;color:#7a7a8c;font-style:italic;margin:8px 0">$1</blockquote>');
+  }
+</script>
+</body>
+</html>
